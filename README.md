@@ -47,7 +47,11 @@ npm run dist:mac
 
 Unity 版工程在 `UnityGame/`。用 Unity Hub 打开这个目录即可。
 
-现有 HTML/Electron 原型已经导入到 `UnityGame/Assets/ImportedPrototype/`，包括 `src`、`assets`、桌面入口文件和预览图。`node_modules` 和 Unity 的生成缓存不会提交到仓库。
+可玩的 Unity 场景在 `UnityGame/Assets/Scenes/Main.unity`。工程打开时会自动尝试切到这个场景；如果 Unity 仍停在 `Untitled`，在 Project 面板里双击 `Assets/Scenes/Main` 即可。按播放后会出现开始菜单、序章、教堂和第一章城市。
+
+核心 Unity 逻辑在 `UnityGame/Assets/Game/Scripts/UnityPrototypeGame.cs`，目前用脚本生成像素风占位地图、主角、老人、警戒线和第一章第一幕任务。`UnityGame/Assets/Editor/CreatePlayableScene.cs` 可以通过 Unity 菜单 `Tools/Old Church/Rebuild Playable Scene` 重新生成主场景。
+
+现有 HTML/Electron 原型也保留并导入到 `UnityGame/Assets/ImportedPrototype/`，包括 `src`、`assets`、桌面入口文件和预览图。`node_modules` 和 Unity 的生成缓存不会提交到仓库。
 
 ## 素材来源
 
