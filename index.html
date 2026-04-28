@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>微恐俯视角剧情游戏框架</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <canvas id="game" width="960" height="540" tabindex="0" aria-label="2D top-down story game"></canvas>
+
+      <section id="hud" class="hud" aria-label="game status">
+        <div class="hud-block">
+          <span class="hud-label">地点</span>
+          <strong id="roomName">--</strong>
+        </div>
+        <div class="hud-block">
+          <span class="hud-label">目标</span>
+          <strong id="objective">--</strong>
+        </div>
+        <div class="hud-block">
+          <span class="hud-label">背包</span>
+          <strong id="inventory">空</strong>
+        </div>
+      </section>
+
+      <section id="interactionPrompt" class="interaction-prompt hidden"></section>
+
+      <section id="dialogue" class="dialogue hidden" aria-live="polite">
+        <div class="dialogue-speaker" id="dialogueSpeaker"></div>
+        <p class="dialogue-text" id="dialogueText"></p>
+        <div class="dialogue-choices" id="dialogueChoices"></div>
+      </section>
+
+      <aside id="journal" class="journal hidden">
+        <div class="journal-header">
+          <span>记录</span>
+          <button id="closeJournal" type="button" aria-label="关闭记录">×</button>
+        </div>
+        <ol id="journalList"></ol>
+      </aside>
+
+      <div class="screen-vignette"></div>
+      <div class="scanlines"></div>
+    </main>
+
+    <script src="src/content.js"></script>
+    <script src="src/game.js"></script>
+  </body>
+</html>
