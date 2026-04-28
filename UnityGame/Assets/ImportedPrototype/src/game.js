@@ -111,6 +111,7 @@
     D: { color: "#77614f", type: "exit" },
     F: { color: "#796f5a", type: "fence" },
     G: { color: "#53616f", type: "generator" },
+    H: { color: "#7d6756", type: "bed" },
     K: { color: "#7c715e", type: "keys" },
     L: { color: "#7b7869", type: "lamp" },
     N: { color: "#8e9b8e", type: "npc" },
@@ -301,9 +302,7 @@
       return;
     }
 
-    if (target.giveItem) addItem(target.giveItem);
-    if (target.setFlag) state.flags[target.setFlag] = true;
-    if (target.onceFlag) state.flags[target.onceFlag] = true;
+    applyEffects(target);
     updateHud();
     openDialogueById(target.dialogue);
   }
@@ -321,6 +320,8 @@
       showEnding(exit.ending);
       return;
     }
+    applyEffects(exit);
+    updateHud();
     if (exit.chapterCard) {
       showChapterCard(exit.chapterCard, () => changeRoom(exit.targetRoom, exit.targetSpawn));
       return;
@@ -375,7 +376,7 @@
 
   function changeRoom(roomId, spawnId) {
     const nextRoom = content.rooms[roomId];
-    const spawn = nextRoom.spawnPoints[spawnId] || content.startPosition;
+    const spawn = nextRoom.spawnPoints?.[spawnId] || content.startPosition;
     state.roomId = roomId;
     state.player.x = spawn.x * tileSize + tileSize / 2;
     state.player.y = spawn.y * tileSize + tileSize / 2;
@@ -383,6 +384,16 @@
     state.shake = 0.22;
     updateHud();
     tuneDrone();
+    runRoomEntry(nextRoom);
+  }
+
+  function runRoomEntry(nextRoom) {
+    const entry = nextRoom.onEnter;
+    if (!entry) return;
+    if (entry.onceFlag && state.flags[entry.onceFlag]) return;
+    applyEffects(entry);
+    updateHud();
+    if (entry.dialogue) openDialogueById(entry.dialogue);
   }
 
   function openDialogueById(id) {
@@ -444,14 +455,21 @@
   }
 
   function chooseDialogue(choice) {
-    if (choice.setFlag) state.flags[choice.setFlag] = true;
-    if (choice.giveItem) addItem(choice.giveItem);
+    applyEffects(choice);
     updateHud();
     if (choice.next) {
       openDialogueById(choice.next);
       return;
     }
     if (choice.close) closeDialogue();
+  }
+
+  function applyEffects(source) {
+    if (!source) return;
+    if (source.giveItem) addItem(source.giveItem);
+    if (source.setFlag) state.flags[source.setFlag] = true;
+    for (const flag of source.setFlags || []) state.flags[flag] = true;
+    if (source.onceFlag) state.flags[source.onceFlag] = true;
   }
 
   function closeDialogue() {
@@ -715,6 +733,13 @@
       ctx.fillRect(-14, 1, 28, 7);
       ctx.fillRect(-11, 7, 4, 5);
       ctx.fillRect(7, 7, 4, 5);
+    } else if (info.type === "bed") {
+      ctx.fillStyle = "#5f4d3e";
+      ctx.fillRect(-14, -10, 28, 20);
+      ctx.fillStyle = "#97866f";
+      ctx.fillRect(-11, -7, 22, 14);
+      ctx.fillStyle = "#d1c7a7";
+      ctx.fillRect(-10, -8, 9, 6);
     } else if (info.type === "tree") {
       ctx.fillStyle = "#3f2e1e";
       ctx.fillRect(-3, 2, 6, 12);

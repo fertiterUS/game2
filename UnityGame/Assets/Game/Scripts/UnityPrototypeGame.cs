@@ -11,7 +11,8 @@ namespace OldChurchGame
             MainMenu,
             ChapterCard,
             Church,
-            City
+            City,
+            Dormitory
         }
 
         private enum ChapterTarget
@@ -54,6 +55,7 @@ namespace OldChurchGame
         private Vector2 playerPosition;
         private Vector2 elderPosition;
         private Vector2 churchDoorPosition;
+        private Vector2 dormDoorPosition;
         private Rect cityBounds;
         private Rect departmentStoreEntrance;
         private Rect universityEntrance;
@@ -65,6 +67,7 @@ namespace OldChurchGame
         private bool churchDialogueComplete;
         private bool hasSupplies;
         private bool firstActComplete;
+        private bool hauntedHouseTask;
         private int dialogueIndex = -1;
         private string[] activeDialogue;
         private GUIStyle titleStyle;
@@ -81,6 +84,7 @@ namespace OldChurchGame
             mode = GameMode.City;
             hasSupplies = false;
             firstActComplete = false;
+            hauntedHouseTask = false;
             playerPosition = new Vector2(0f, -5.7f);
             objective = "第一章 第一幕：去百货大楼买生活用品。";
             BuildCity();
@@ -229,6 +233,7 @@ namespace OldChurchGame
             churchDialogueComplete = false;
             hasSupplies = false;
             firstActComplete = false;
+            hauntedHouseTask = false;
             dialogueIndex = -1;
             activeDialogue = null;
             objective = "";
@@ -268,10 +273,61 @@ namespace OldChurchGame
         {
             mode = GameMode.City;
             playerPosition = new Vector2(0f, -5.7f);
-            objective = "第一章 第一幕：去百货大楼买生活用品。";
+            UpdateCityObjective();
             BuildCity();
             ShowMessage("门在身后合上，城市像一张旧照片一样展开。", 4f);
             PositionCamera(true);
+        }
+
+        private void EnterCityFromDormitory()
+        {
+            mode = GameMode.City;
+            playerPosition = new Vector2(14f, -1.1f);
+            UpdateCityObjective();
+            BuildCity();
+            ShowMessage("你从寝室楼回到校园门口。", 3f);
+            PositionCamera(true);
+        }
+
+        private void EnterDormitory()
+        {
+            mode = GameMode.Dormitory;
+            firstActComplete = true;
+            playerPosition = new Vector2(0f, -3.85f);
+            dormDoorPosition = new Vector2(0f, -4.85f);
+            objective = "第一章 第二幕：接听寝室里的来电。";
+            BuildDormitory();
+            StartDialogue(new[]
+            {
+                "你推开 402 寝室的门，把刚买的生活用品放到床边。",
+                "桌上的手机突然亮起来，铃声在空寝室里响得很急。",
+                "屏幕上只有一个陌生名字：张超。",
+                "张超：喂，林夏？我是张超，你室友。你回寝室了吧？",
+                "张超：班里刚通知，学校今晚组织活动，地点是城南旧鬼屋。",
+                "张超：集合时间和带队老师还没发，你先别走远。还有，别问我为什么是鬼屋，我也觉得不对劲。"
+            }, () =>
+            {
+                hauntedHouseTask = true;
+                objective = "第一章 第二幕：学校组织去城南旧鬼屋活动，后续剧情待定。";
+                ShowMessage("手机通话结束。鬼屋活动任务已记录。", 4f);
+            });
+            PositionCamera(true);
+        }
+
+        private void UpdateCityObjective()
+        {
+            if (hauntedHouseTask)
+            {
+                objective = "第一章 第二幕：等待鬼屋活动集合信息。";
+            }
+            else if (hasSupplies)
+            {
+                objective = "第一章 第一幕：带着生活用品回光明大学寝室。";
+            }
+            else
+            {
+                objective = "第一章 第一幕：去百货大楼买生活用品。";
+            }
         }
 
         private void BuildChurch()
@@ -348,6 +404,59 @@ namespace OldChurchGame
             AddStreetProps();
             AddNpcCrowd();
             AddPlayer();
+        }
+
+        private void BuildDormitory()
+        {
+            EnsureWorldRoot();
+            ClearWorld();
+            blockers.Clear();
+
+            AddRect("Dorm floor", new Rect(-5.8f, -5.25f, 11.6f, 10.5f), new Color(0.16f, 0.14f, 0.12f), 0);
+            AddCheckerFloor(new Rect(-5.3f, -4.85f, 10.6f, 9.7f), new Color(0.24f, 0.2f, 0.16f), new Color(0.2f, 0.17f, 0.14f), 0.55f, 1);
+
+            AddRect("Dorm north wall", new Rect(-5.9f, 4.85f, 11.8f, 0.45f), PaletteWall(), 10);
+            AddRect("Dorm west wall", new Rect(-5.9f, -5.25f, 0.45f, 10.5f), PaletteWall(), 10);
+            AddRect("Dorm east wall", new Rect(5.45f, -5.25f, 0.45f, 10.5f), PaletteWall(), 10);
+            AddRect("Dorm south wall left", new Rect(-5.9f, -5.25f, 4.8f, 0.45f), PaletteWall(), 10);
+            AddRect("Dorm south wall right", new Rect(1.1f, -5.25f, 4.8f, 0.45f), PaletteWall(), 10);
+            AddRect("Dorm door shadow", new Rect(-0.65f, -5.25f, 1.3f, 0.45f), new Color(0.06f, 0.045f, 0.035f), 11);
+
+            blockers.Add(new Rect(-6.15f, 4.55f, 12.3f, 0.9f));
+            blockers.Add(new Rect(-6.15f, -5.45f, 0.9f, 10.9f));
+            blockers.Add(new Rect(5.25f, -5.45f, 0.9f, 10.9f));
+            blockers.Add(new Rect(-6.15f, -5.45f, 5.1f, 0.9f));
+            blockers.Add(new Rect(1.05f, -5.45f, 5.1f, 0.9f));
+
+            AddDormBed("Left upper bed", new Vector2(-3.7f, 2.8f));
+            AddDormBed("Left lower bed", new Vector2(-3.7f, 0.9f));
+            AddDormBed("Right upper bed", new Vector2(3.7f, 2.8f));
+            AddDormBed("Right lower bed", new Vector2(3.7f, 0.9f));
+
+            AddRect("Desk", new Rect(-1.55f, -0.55f, 3.1f, 1.05f), PaletteWood(), 18);
+            AddRect("Phone body", new Rect(-0.35f, -0.16f, 0.7f, 0.36f), new Color(0.05f, 0.06f, 0.07f), 25);
+            AddRect("Phone screen", new Rect(-0.24f, -0.08f, 0.48f, 0.2f), new Color(0.32f, 0.72f, 0.62f), 26);
+            AddLabel("手机", new Vector2(0f, 0.72f), 1.8f, new Color(0.72f, 0.64f, 0.46f), Color.clear, 35);
+
+            AddRect("Wardrobe left", new Rect(-5.05f, -2.1f, 1.2f, 1.9f), new Color(0.25f, 0.2f, 0.16f), 18);
+            AddRect("Wardrobe right", new Rect(3.85f, -2.1f, 1.2f, 1.9f), new Color(0.25f, 0.2f, 0.16f), 18);
+            AddRect("Supplies basin", new Rect(-4.1f, -3.65f, 1.1f, 0.46f), new Color(0.52f, 0.62f, 0.6f), 20);
+            AddLabel("寝室 402", new Vector2(0f, 4.1f), 3.4f, new Color(0.7f, 0.64f, 0.49f), Color.clear, 35);
+
+            blockers.Add(new Rect(-4.8f, 0.45f, 2.2f, 3.25f));
+            blockers.Add(new Rect(2.6f, 0.45f, 2.2f, 3.25f));
+            blockers.Add(new Rect(-1.7f, -0.7f, 3.4f, 1.35f));
+            blockers.Add(new Rect(-5.25f, -2.3f, 1.55f, 2.25f));
+            blockers.Add(new Rect(3.7f, -2.3f, 1.55f, 2.25f));
+
+            AddPlayer();
+        }
+
+        private void AddDormBed(string name, Vector2 center)
+        {
+            AddRect(name + " frame", new Rect(center.x - 1.05f, center.y - 0.45f, 2.1f, 0.9f), new Color(0.37f, 0.28f, 0.21f), 17);
+            AddRect(name + " blanket", new Rect(center.x - 0.82f, center.y - 0.28f, 1.64f, 0.58f), new Color(0.52f, 0.48f, 0.39f), 19);
+            AddRect(name + " pillow", new Rect(center.x - 0.78f, center.y + 0.16f, 0.55f, 0.24f), new Color(0.78f, 0.72f, 0.58f), 20);
         }
 
         private void AddWaterAndEmbankments()
@@ -674,21 +783,26 @@ namespace OldChurchGame
                     ShowMessage("按 E / 空格进入百货大楼。", 0.1f);
                     if (PressedInteract())
                     {
-                        hasSupplies = true;
-                        objective = "第一章 第一幕：带着生活用品回光明大学。";
-                        ShowMessage("你在百货大楼买到了生活用品。塑料袋勒得手指发冷。", 4f);
+                        if (hasSupplies)
+                        {
+                            ShowMessage("生活用品已经买好，该回光明大学寝室了。", 3f);
+                        }
+                        else
+                        {
+                            hasSupplies = true;
+                            UpdateCityObjective();
+                            ShowMessage("你在百货大楼买到了生活用品。塑料袋勒得手指发冷。", 4f);
+                        }
                     }
                 }
                 else if (universityEntrance.Contains(playerPosition))
                 {
-                    ShowMessage("按 E / 空格进入光明大学。", 0.1f);
+                    ShowMessage("按 E / 空格进入光明大学寝室。", 0.1f);
                     if (PressedInteract())
                     {
                         if (hasSupplies)
                         {
-                            firstActComplete = true;
-                            objective = "第一章 第一幕完成：后续剧情待补。";
-                            ShowMessage("你回到了光明大学。第一幕到此结束。", 4f);
+                            EnterDormitory();
                         }
                         else
                         {
@@ -696,9 +810,37 @@ namespace OldChurchGame
                         }
                     }
                 }
-                else if (!firstActComplete && PressedInteract())
+                else if (PressedInteract())
                 {
-                    ShowMessage(hasSupplies ? "生活用品已经买好，该回学校了。" : "当前任务：去百货大楼买生活用品。", 2f);
+                    if (hauntedHouseTask)
+                    {
+                        ShowMessage("当前任务：等待鬼屋活动集合信息。", 2f);
+                    }
+                    else
+                    {
+                        ShowMessage(hasSupplies ? "生活用品已经买好，该回学校寝室了。" : "当前任务：去百货大楼买生活用品。", 2f);
+                    }
+                }
+
+                return;
+            }
+
+            if (mode == GameMode.Dormitory)
+            {
+                if (Vector2.Distance(playerPosition, dormDoorPosition) <= 1.1f && playerPosition.y < -4.2f)
+                {
+                    ShowMessage("按 E / 空格离开寝室。", 0.1f);
+                    if (PressedInteract())
+                    {
+                        EnterCityFromDormitory();
+                    }
+
+                    return;
+                }
+
+                if (PressedInteract())
+                {
+                    ShowMessage(hauntedHouseTask ? "手机里记录着张超的来电：城南旧鬼屋活动，后续待定。" : "手机还在桌上响。", 2.5f);
                 }
             }
         }

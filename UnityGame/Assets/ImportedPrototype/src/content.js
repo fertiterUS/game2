@@ -133,6 +133,22 @@
     return map.map((row) => row.join(""));
   }
 
+  function createDormitoryMap() {
+    const map = createMap(25, 15);
+    border(map, 0, 0, 25, 15, "#");
+    put(map, 12, 14, "D");
+
+    scatter(map, [[4, 3], [4, 5], [20, 3], [20, 5]], "H");
+    scatter(map, [[7, 3], [17, 3], [7, 7], [17, 7], [3, 10], [21, 10]], "C");
+    scatter(map, [[10, 8], [14, 8]], "B");
+    scatter(map, [[5, 11], [19, 11]], "L");
+    put(map, 12, 2, "S");
+    put(map, 12, 5, "T");
+    put(map, 18, 9, "C");
+
+    return map.map((row) => row.join(""));
+  }
+
   window.GameContent = {
     startRoom: "church",
     startPosition: { x: 9, y: 8 },
@@ -161,7 +177,9 @@
     flags: {
       spokeToElder: false,
       boughtSupplies: false,
-      returnedToUniversity: false
+      returnedToUniversity: false,
+      enteredDormitory: false,
+      hauntedHouseTask: false
     },
     chapterCards: {
       prologue: {
@@ -171,7 +189,7 @@
       },
       chapterOne: {
         title: "第一章",
-        lines: ["教堂外，是一座被警戒线封住的城市。先去百货大楼买生活用品，再回光明大学。"],
+        lines: ["教堂外，是一座被警戒线封住的城市。先去百货大楼买生活用品，再回光明大学寝室。"],
         duration: 1900
       }
     },
@@ -240,7 +258,8 @@
       city: {
         name: "封闭城市",
         objective: [
-          { flag: "returnedToUniversity", text: "第一幕完成。后续剧情待补。" },
+          { flag: "hauntedHouseTask", text: "学校组织去鬼屋活动，集合地点后续待定。" },
+          { flag: "returnedToUniversity", text: "进入寝室，查看学校活动通知。" },
           { flag: "boughtSupplies", text: "带着生活用品回光明大学。" },
           { text: "去百货大楼买生活用品。" }
         ],
@@ -253,7 +272,8 @@
         fogAlpha: 0.38,
         map: createCityMap(),
         spawnPoints: {
-          churchGate: { x: 32, y: 39 }
+          churchGate: { x: 32, y: 39 },
+          universityGate: { x: 56, y: 31 }
         },
         labels: [
           { x: 5, y: 13, text: "人民公园", width: 5 },
@@ -272,7 +292,19 @@
           { x: 39, y: 52, text: "游戏厅", width: 6 },
           { x: 51, y: 52, text: "大众茶馆", width: 8 }
         ],
-        exits: [],
+        exits: [
+          {
+            id: "universityGate",
+            x: 56,
+            y: 29,
+            label: "进入光明大学寝室",
+            requiredFlag: "boughtSupplies",
+            lockedDialogue: "schoolNeedSupplies",
+            targetRoom: "dormitory",
+            targetSpawn: "doorway",
+            setFlag: "returnedToUniversity"
+          }
+        ],
         interactables: [
           {
             id: "churchFront",
@@ -308,16 +340,59 @@
             y: 56,
             label: "去百货大楼买生活用品",
             dialogue: "departmentStore"
+          }
+        ]
+      },
+      dormitory: {
+        name: "光明大学寝室 402",
+        objective: [
+          { flag: "hauntedHouseTask", text: "学校组织去鬼屋活动，后续剧情待定。" },
+          { text: "放下生活用品，查看寝室通知。" }
+        ],
+        ambient: "#151412",
+        floor: "#27221d",
+        wall: "#3e3429",
+        fog: "#050505",
+        musicMood: "thin",
+        lightRadius: 172,
+        fogAlpha: 0.52,
+        map: createDormitoryMap(),
+        spawnPoints: {
+          doorway: { x: 12, y: 12 }
+        },
+        labels: [
+          { x: 9, y: 1, text: "寝室 402", width: 7 },
+          { x: 10, y: 4, text: "手机", width: 4 }
+        ],
+        onEnter: {
+          onceFlag: "enteredDormitory",
+          setFlags: ["enteredDormitory", "returnedToUniversity"],
+          dialogue: "enterDormitory"
+        },
+        exits: [
+          {
+            id: "dormDoor",
+            x: 12,
+            y: 14,
+            label: "离开寝室",
+            targetRoom: "city",
+            targetSpawn: "universityGate"
+          }
+        ],
+        interactables: [
+          {
+            id: "dormPhone",
+            x: 12,
+            y: 5,
+            label: "查看手机",
+            dialogue: "phoneAfterCall"
           },
           {
-            id: "university",
-            x: 56,
-            y: 29,
-            label: "回光明大学",
-            dialogue: "returnToUniversity",
-            requiredFlag: "boughtSupplies",
-            lockedDialogue: "schoolNeedSupplies",
-            setFlag: "returnedToUniversity"
+            id: "ownBed",
+            x: 4,
+            y: 5,
+            label: "整理床铺",
+            dialogue: "dormBed"
           }
         ]
       }
@@ -397,10 +472,49 @@
         speaker: "光明大学",
         lines: [
           "你拎着刚买的生活用品回到校门口。",
-          "传达室里没有人，登记簿却翻到了写着你名字的那一页。"
+          "传达室里没有人，登记簿却翻到了写着你名字的那一页。",
+          "宿舍楼的灯亮着，像有人提前把你的房间留了出来。"
         ],
-        journal: "第一幕完成：买到生活用品，并回到了光明大学。后续剧情待补。",
-        choices: [{ text: "进入学校（占位）", close: true }]
+        journal: "买到生活用品后，我回到了光明大学，接下来要进寝室。",
+        choices: [{ text: "进入寝室", close: true }]
+      },
+      enterDormitory: {
+        speaker: "光明大学寝室",
+        lines: [
+          "你推开 402 寝室的门，铁架床发出很轻的一声响。",
+          "生活用品刚放到床边，桌上的手机突然亮了起来。",
+          "屏幕上只有一个陌生名字：张超。",
+          "铃声在空寝室里响得很急。"
+        ],
+        choices: [{ text: "拿起手机", next: "zhangChaoCall" }]
+      },
+      zhangChaoCall: {
+        speaker: "张超",
+        lines: [
+          "“喂，林夏？我是张超，你室友。”",
+          "“你回寝室了吧？班里刚通知，学校今晚组织活动，地点是城南旧鬼屋。”",
+          "“说是统一集合，具体时间和带队老师还没发。你先别走远。”",
+          "电话那头顿了顿：“还有，别问我为什么是鬼屋，我也觉得不对劲。”"
+        ],
+        journal: "第一章更新：室友张超打来电话，说学校今晚组织去城南旧鬼屋的活动。集合细节后续待定。",
+        choices: [{ text: "挂断电话", close: true, setFlag: "hauntedHouseTask" }]
+      },
+      phoneAfterCall: {
+        speaker: "手机",
+        lines: [
+          "通话记录里只有一个名字：张超。",
+          "最新一条短信还没发完，只停在“城南旧鬼屋集合”。"
+        ],
+        choices: [{ text: "收起手机", close: true, setFlag: "hauntedHouseTask" }]
+      },
+      dormBed: {
+        speaker: "床铺",
+        lines: [
+          "你把脸盆、毛巾和搪瓷杯放好。",
+          "床板下面夹着一张旧车票，终点站被水渍糊住了。"
+        ],
+        journal: "寝室床板下有一张看不清终点的旧车票。",
+        choices: [{ text: "收好东西", close: true }]
       },
       cityPlaceholder: {
         speaker: "城市",
