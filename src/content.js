@@ -14,67 +14,112 @@
     }
   }
 
+  function border(map, x, y, width, height, glyph) {
+    for (let xx = x; xx < x + width; xx += 1) {
+      put(map, xx, y, glyph);
+      put(map, xx, y + height - 1, glyph);
+    }
+    for (let yy = y; yy < y + height; yy += 1) {
+      put(map, x, yy, glyph);
+      put(map, x + width - 1, yy, glyph);
+    }
+  }
+
   function scatter(map, points, glyph) {
     for (const [x, y] of points) put(map, x, y, glyph);
   }
 
-  function addBuilding(map, x, y, width, height, signX, signY) {
+  function addBuilding(map, x, y, width, height) {
     rect(map, x, y, width, height, "#");
-    put(map, signX, signY, "S");
   }
 
   function createCityMap() {
-    const map = createMap(54, 42);
+    const map = createMap(64, 64);
 
-    rect(map, 1, 1, 52, 2, "~");
-    rect(map, 1, 39, 52, 2, "~");
-    rect(map, 1, 29, 4, 11, "~");
+    rect(map, 1, 1, 62, 3, "~");
+    rect(map, 1, 60, 62, 3, "~");
+    rect(map, 1, 41, 4, 19, "~");
+    rect(map, 2, 4, 61, 1, ",");
+    rect(map, 2, 59, 61, 1, ",");
 
-    rect(map, 4, 12, 49, 3, "=");
-    rect(map, 4, 25, 49, 3, "=");
-    rect(map, 4, 34, 49, 3, "=");
-    rect(map, 16, 3, 3, 36, "=");
-    rect(map, 35, 3, 3, 36, "=");
-    rect(map, 47, 3, 3, 36, "=");
-    rect(map, 26, 1, 3, 11, "=");
+    rect(map, 27, 1, 3, 11, "=");
+    rect(map, 7, 15, 56, 3, "=");
+    rect(map, 5, 29, 58, 3, "=");
+    rect(map, 5, 42, 58, 3, "=");
+    rect(map, 5, 55, 58, 3, "=");
+    rect(map, 17, 5, 3, 55, "=");
+    rect(map, 31, 5, 3, 55, "=");
+    rect(map, 47, 5, 3, 55, "=");
+    rect(map, 57, 14, 3, 43, "=");
 
-    rect(map, 4, 5, 9, 6, ",");
-    scatter(map, [[5, 6], [7, 5], [10, 6], [5, 9], [11, 9]], "Y");
-    put(map, 8, 8, "Q");
+    rect(map, 3, 6, 11, 8, ",");
+    scatter(map, [[4, 7], [6, 6], [10, 7], [4, 11], [8, 12], [12, 10]], "Y");
+    put(map, 7, 9, "Q");
+    put(map, 8, 13, "S");
 
-    addBuilding(map, 6, 7, 8, 4, 10, 10);
-    addBuilding(map, 22, 6, 7, 5, 25, 10);
-    addBuilding(map, 32, 5, 9, 6, 36, 10);
-    addBuilding(map, 43, 7, 8, 4, 47, 10);
-    addBuilding(map, 6, 18, 8, 4, 10, 21);
-    addBuilding(map, 42, 18, 8, 4, 46, 21);
-    addBuilding(map, 7, 30, 9, 4, 11, 33);
-    addBuilding(map, 22, 30, 10, 4, 27, 33);
-    addBuilding(map, 39, 30, 10, 4, 44, 33);
+    addBuilding(map, 13, 7, 9, 6);
+    put(map, 17, 13, "S");
+    addBuilding(map, 26, 7, 7, 6);
+    put(map, 29, 13, "S");
+    addBuilding(map, 37, 6, 10, 7);
+    put(map, 42, 13, "S");
+    addBuilding(map, 52, 7, 9, 6);
+    put(map, 56, 13, "S");
 
-    rect(map, 21, 16, 13, 9, ",");
-    rect(map, 25, 17, 5, 6, "#");
-    put(map, 27, 16, "O");
-    put(map, 27, 23, "D");
-    scatter(map, [[22, 17], [32, 17], [22, 23], [32, 23], [24, 24], [30, 24]], "Y");
+    addBuilding(map, 6, 22, 8, 5);
+    put(map, 10, 27, "S");
+    addBuilding(map, 1, 29, 5, 8);
+    put(map, 4, 33, "S");
+    addBuilding(map, 8, 32, 10, 5);
+    put(map, 13, 37, "S");
+
+    rect(map, 22, 20, 21, 18, ",");
+    border(map, 22, 20, 21, 18, "F");
+    put(map, 31, 37, "=");
+    put(map, 32, 37, "=");
+    put(map, 33, 37, "=");
+    rect(map, 28, 23, 9, 9, "#");
+    put(map, 32, 22, "O");
+    put(map, 32, 32, "D");
+    scatter(map, [[23, 21], [41, 21], [24, 34], [40, 34], [25, 24], [39, 26], [27, 36], [37, 36]], "Y");
+
+    addBuilding(map, 51, 22, 10, 6);
+    put(map, 56, 28, "S");
+    addBuilding(map, 49, 34, 12, 5);
+    put(map, 55, 39, "S");
+    addBuilding(map, 60, 22, 3, 9);
+    put(map, 61, 31, "S");
+
+    addBuilding(map, 8, 47, 10, 7);
+    put(map, 13, 54, "S");
+    addBuilding(map, 22, 47, 8, 7);
+    put(map, 26, 54, "S");
+    addBuilding(map, 38, 47, 8, 6);
+    put(map, 42, 53, "S");
+    addBuilding(map, 50, 47, 11, 6);
+    put(map, 55, 53, "S");
+    scatter(map, [[52, 54], [58, 54], [51, 56], [59, 56]], "Y");
 
     scatter(
       map,
       [
-        [19, 13],
-        [34, 13],
-        [19, 26],
-        [34, 26],
-        [46, 13],
-        [46, 26],
-        [15, 34],
-        [38, 34],
-        [50, 34]
+        [20, 16],
+        [34, 16],
+        [46, 16],
+        [20, 30],
+        [46, 30],
+        [20, 43],
+        [34, 43],
+        [46, 43],
+        [20, 55],
+        [36, 55],
+        [49, 55],
+        [58, 42]
       ],
       "L"
     );
-    scatter(map, [[12, 26], [31, 13], [44, 25], [29, 35]], "V");
-    scatter(map, [[19, 12], [33, 25], [41, 13], [24, 35], [50, 28], [9, 35]], "N");
+    scatter(map, [[14, 42], [23, 43], [53, 29], [38, 56], [55, 17]], "V");
+    scatter(map, [[22, 15], [35, 29], [43, 15], [13, 55], [51, 43], [58, 56], [9, 42], [48, 28]], "N");
 
     for (let x = 0; x < map[0].length; x += 1) {
       put(map, x, 0, "!");
@@ -107,9 +152,16 @@
       color: "#cfd9c1",
       shadow: "#5c6b55"
     },
-    items: {},
+    items: {
+      dailySupplies: {
+        name: "生活用品",
+        description: "从百货大楼买来的脸盆、毛巾和几件日用品。"
+      }
+    },
     flags: {
-      spokeToElder: false
+      spokeToElder: false,
+      boughtSupplies: false,
+      returnedToUniversity: false
     },
     chapterCards: {
       prologue: {
@@ -119,7 +171,7 @@
       },
       chapterOne: {
         title: "第一章",
-        lines: ["教堂外，是一座被警戒线封住的城市。"],
+        lines: ["教堂外，是一座被警戒线封住的城市。先去百货大楼买生活用品，再回光明大学。"],
         duration: 1900
       }
     },
@@ -187,7 +239,11 @@
       },
       city: {
         name: "封闭城市",
-        objective: "探索城市。后续剧情待补。",
+        objective: [
+          { flag: "returnedToUniversity", text: "第一幕完成。后续剧情待补。" },
+          { flag: "boughtSupplies", text: "带着生活用品回光明大学。" },
+          { text: "去百货大楼买生活用品。" }
+        ],
         ambient: "#121615",
         floor: "#2c2b27",
         wall: "#443c31",
@@ -197,37 +253,71 @@
         fogAlpha: 0.38,
         map: createCityMap(),
         spawnPoints: {
-          churchGate: { x: 27, y: 24 }
+          churchGate: { x: 32, y: 39 }
         },
+        labels: [
+          { x: 5, y: 13, text: "人民公园", width: 5 },
+          { x: 14, y: 11, text: "新华书店", width: 7 },
+          { x: 27, y: 11, text: "录像厅", width: 5 },
+          { x: 38, y: 11, text: "红星商场", width: 8 },
+          { x: 53, y: 11, text: "国营饭店", width: 7 },
+          { x: 7, y: 25, text: "粮油店", width: 6 },
+          { x: 1, y: 33, text: "理发店", width: 4, vertical: true },
+          { x: 10, y: 36, text: "邮局", width: 5 },
+          { x: 52, y: 27, text: "光明大学", width: 8 },
+          { x: 60, y: 30, text: "湘汇街", width: 3, vertical: true },
+          { x: 51, y: 38, text: "中山诊所", width: 8 },
+          { x: 9, y: 53, text: "百货大楼", width: 8 },
+          { x: 22, y: 53, text: "和平电影院", width: 8 },
+          { x: 39, y: 52, text: "游戏厅", width: 6 },
+          { x: 51, y: 52, text: "大众茶馆", width: 8 }
+        ],
         exits: [],
         interactables: [
           {
             id: "churchFront",
-            x: 27,
-            y: 23,
+            x: 32,
+            y: 33,
             label: "回望教堂",
             dialogue: "cityChurch"
           },
           {
             id: "bookstore",
-            x: 10,
-            y: 10,
+            x: 17,
+            y: 13,
             label: "查看新华书店",
             dialogue: "cityPlaceholder"
           },
           {
             id: "videoHall",
-            x: 25,
-            y: 10,
+            x: 29,
+            y: 13,
             label: "查看录像厅",
             dialogue: "cityPlaceholder"
           },
           {
             id: "market",
-            x: 36,
-            y: 10,
+            x: 42,
+            y: 13,
             label: "查看红星商场",
             dialogue: "cityPlaceholder"
+          },
+          {
+            id: "departmentStore",
+            x: 13,
+            y: 56,
+            label: "去百货大楼买生活用品",
+            dialogue: "departmentStore"
+          },
+          {
+            id: "university",
+            x: 56,
+            y: 29,
+            label: "回光明大学",
+            dialogue: "returnToUniversity",
+            requiredFlag: "boughtSupplies",
+            lockedDialogue: "schoolNeedSupplies",
+            setFlag: "returnedToUniversity"
           }
         ]
       }
@@ -283,9 +373,34 @@
         speaker: "教堂",
         lines: [
           "门已经合上，里面没有钟声。",
-          "城市像一张过于完整的地图，在你面前安静展开。"
+          "城市像一张过于完整的地图，在你面前安静展开。",
+          "你想起自己原本该做的事：去百货大楼买生活用品，然后回学校。"
         ],
+        journal: "第一幕目标：去百货大楼买生活用品，然后回光明大学。",
         choices: [{ text: "离开", close: true }]
+      },
+      departmentStore: {
+        speaker: "百货大楼",
+        lines: [
+          "柜台后的日光灯忽明忽暗，货架上整齐摆着脸盆、毛巾和搪瓷杯。",
+          "售货员低着头写单，像没有看见你。"
+        ],
+        journal: "在百货大楼买到了生活用品。接下来该回光明大学。",
+        choices: [{ text: "购买生活用品", close: true, giveItem: "dailySupplies", setFlag: "boughtSupplies" }]
+      },
+      schoolNeedSupplies: {
+        speaker: "光明大学",
+        lines: ["校门口的传达室亮着灯。你突然想起来，生活用品还没买。"],
+        choices: [{ text: "先去百货大楼", close: true }]
+      },
+      returnToUniversity: {
+        speaker: "光明大学",
+        lines: [
+          "你拎着刚买的生活用品回到校门口。",
+          "传达室里没有人，登记簿却翻到了写着你名字的那一页。"
+        ],
+        journal: "第一幕完成：买到生活用品，并回到了光明大学。后续剧情待补。",
+        choices: [{ text: "进入学校（占位）", close: true }]
       },
       cityPlaceholder: {
         speaker: "城市",

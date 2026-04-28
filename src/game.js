@@ -48,7 +48,7 @@
   };
 
   const tileSize = content.tileSize;
-  const solidTiles = new Set(["#", "~", "!"]);
+  const solidTiles = new Set(["#", "~", "!", "F"]);
   const pixelAssets = {
     image: new Image(),
     loaded: false,
@@ -109,6 +109,7 @@
     B: { color: "#8a7462", type: "pew" },
     C: { color: "#554a40", type: "cabinet" },
     D: { color: "#77614f", type: "exit" },
+    F: { color: "#796f5a", type: "fence" },
     G: { color: "#53616f", type: "generator" },
     K: { color: "#7c715e", type: "keys" },
     L: { color: "#7b7869", type: "lamp" },
@@ -255,11 +256,11 @@
     for (const item of currentRoom.interactables || []) {
       if (item.onceFlag && state.flags[item.onceFlag]) continue;
       const distance = distanceToTile(item.x, item.y);
-      if (distance < 42) candidates.push({ ...item, distance, kind: "object" });
+      if (distance < 54) candidates.push({ ...item, distance, kind: "object" });
     }
     for (const exit of currentRoom.exits || []) {
       const distance = distanceToTile(exit.x, exit.y);
-      if (distance < 38) candidates.push({ ...exit, distance, kind: "exit" });
+      if (distance < 48) candidates.push({ ...exit, distance, kind: "exit" });
     }
     candidates.sort((a, b) => a.distance - b.distance);
     return candidates[0] || null;
@@ -303,6 +304,7 @@
     if (target.giveItem) addItem(target.giveItem);
     if (target.setFlag) state.flags[target.setFlag] = true;
     if (target.onceFlag) state.flags[target.onceFlag] = true;
+    updateHud();
     openDialogueById(target.dialogue);
   }
 
@@ -444,6 +446,7 @@
   function chooseDialogue(choice) {
     if (choice.setFlag) state.flags[choice.setFlag] = true;
     if (choice.giveItem) addItem(choice.giveItem);
+    updateHud();
     if (choice.next) {
       openDialogueById(choice.next);
       return;
@@ -481,10 +484,16 @@
 
   function updateHud() {
     roomNameEl.textContent = room().name;
-    objectiveEl.textContent = room().objective || content.objective;
+    objectiveEl.textContent = resolveObjective(room().objective || content.objective);
     inventoryEl.textContent = state.inventory.size
       ? [...state.inventory].map((id) => content.items[id].name).join("、")
       : "空";
+  }
+
+  function resolveObjective(objective) {
+    if (!Array.isArray(objective)) return objective;
+    const match = objective.find((entry) => !entry.flag || state.flags[entry.flag]);
+    return match?.text || "";
   }
 
   function updatePrompt() {
@@ -514,6 +523,7 @@
     ctx.translate(offsetX - Math.floor(state.camera.x) + shakeX, offsetY - Math.floor(state.camera.y) + shakeY);
 
     drawRoom(currentRoom);
+    drawLabels(currentRoom);
     drawInteractables(currentRoom);
     drawExits(currentRoom);
     drawLight(currentRoom, dimensions);
@@ -595,6 +605,43 @@
     ctx.fillRect(x, y + tileSize - 3, tileSize, 3);
   }
 
+  function drawLabels(currentRoom) {
+    if (!currentRoom.labels) return;
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = '700 13px "Microsoft YaHei", "PingFang SC", sans-serif';
+
+    for (const label of currentRoom.labels) {
+      const x = label.x * tileSize;
+      const y = label.y * tileSize;
+      if (label.vertical) {
+        const width = 25;
+        const height = Math.max(72, label.text.length * 19 + 12);
+        ctx.fillStyle = "rgba(55, 40, 25, 0.92)";
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeStyle = "rgba(226, 188, 100, 0.55)";
+        ctx.strokeRect(x + 0.5, y + 0.5, width - 1, height - 1);
+        ctx.fillStyle = "#d9bb72";
+        [...label.text].forEach((char, index) => {
+          ctx.fillText(char, x + width / 2, y + 14 + index * 18, width - 6);
+        });
+        continue;
+      }
+
+      const width = (label.width || Math.max(4, label.text.length + 2)) * tileSize;
+      const height = 24;
+      ctx.fillStyle = "rgba(55, 40, 25, 0.92)";
+      ctx.fillRect(x, y, width, height);
+      ctx.strokeStyle = "rgba(226, 188, 100, 0.55)";
+      ctx.strokeRect(x + 0.5, y + 0.5, width - 1, height - 1);
+      ctx.fillStyle = "#d9bb72";
+      ctx.fillText(label.text, x + width / 2, y + height / 2 + 1, width - 8);
+    }
+
+    ctx.restore();
+  }
+
   function drawWall(x, y, color) {
     const wallIndex = pixelAssets.wallTiles[Math.floor((x / tileSize + y / tileSize) % pixelAssets.wallTiles.length)];
     if (drawPixelTile(wallIndex, x, y)) {
@@ -647,6 +694,14 @@
         ctx.rotate(-0.65);
         ctx.fillRect(-2, -9, 4, 18);
         ctx.restore();
+      }
+    } else if (info.type === "fence") {
+      ctx.fillStyle = "#625844";
+      ctx.fillRect(-15, -2, 30, 4);
+      ctx.fillRect(-15, 6, 30, 4);
+      ctx.fillStyle = "#8b8063";
+      for (let i = -13; i <= 13; i += 8) {
+        ctx.fillRect(i, -9, 4, 22);
       }
     } else if (info.type === "altar") {
       ctx.fillRect(-13, -7, 26, 16);
