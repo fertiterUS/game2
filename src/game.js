@@ -13,6 +13,9 @@
   const journalEl = document.getElementById("journal");
   const journalListEl = document.getElementById("journalList");
   const closeJournalButton = document.getElementById("closeJournal");
+  const endingEl = document.getElementById("ending");
+  const endingTitleEl = document.getElementById("endingTitle");
+  const endingTextEl = document.getElementById("endingText");
 
   const state = {
     roomId: content.startRoom,
@@ -28,6 +31,7 @@
     flags: { ...content.flags },
     journal: [],
     dialogue: null,
+    ending: null,
     activeInteractable: null,
     time: 0,
     camera: { x: 0, y: 0 },
@@ -45,8 +49,6 @@
     floorTiles: [8, 9, 10, 35],
     wallTiles: [81, 108, 135],
     objectTiles: {
-      notice: 162,
-      bag: 185,
       cabinet: 112,
       generator: 426,
       keys: 190,
@@ -93,8 +95,8 @@
     Spacebar: "Space"
   };
   const objectGlyphs = {
-    A: { color: "#73836f", type: "notice" },
-    B: { color: "#8a7462", type: "bag" },
+    A: { color: "#9b9178", type: "altar" },
+    B: { color: "#8a7462", type: "pew" },
     C: { color: "#554a40", type: "cabinet" },
     D: { color: "#77614f", type: "exit" },
     G: { color: "#53616f", type: "generator" },
@@ -200,7 +202,7 @@
   }
 
   function movePlayer(dx, dy, dt) {
-    if (state.dialogue) return;
+    if (state.dialogue || state.ending) return;
     if (dx === 0 && dy === 0) return;
 
     const length = Math.hypot(dx, dy);
@@ -237,6 +239,8 @@
   }
 
   function interact() {
+    if (state.ending) return;
+
     if (state.dialogue) {
       advanceDialogue();
       return;
@@ -278,7 +282,26 @@
       openDialogueById(exit.lockedDialogue);
       return;
     }
+    if (exit.ending) {
+      showEnding(exit.ending);
+      return;
+    }
     changeRoom(exit.targetRoom, exit.targetSpawn);
+  }
+
+  function showEnding(endingId) {
+    const ending = content.endings?.[endingId] || {
+      title: "章节结束",
+      lines: ["黑暗落下。"]
+    };
+    state.ending = endingId;
+    state.keys.clear();
+    closeDialogue();
+    promptEl.classList.add("hidden");
+    journalEl.classList.add("hidden");
+    endingTitleEl.textContent = ending.title;
+    endingTextEl.textContent = ending.lines.join(" ");
+    endingEl.classList.remove("hidden");
   }
 
   function changeRoom(roomId, spawnId) {
@@ -399,7 +422,7 @@
 
   function updatePrompt() {
     state.activeInteractable = findInteractable();
-    if (state.dialogue || !state.activeInteractable) {
+    if (state.dialogue || state.ending || !state.activeInteractable) {
       promptEl.classList.add("hidden");
       return;
     }
@@ -511,6 +534,18 @@
       ctx.arc(0, -4, 9, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillRect(-7, 4, 14, 12);
+    } else if (info.type === "altar") {
+      ctx.fillRect(-13, -7, 26, 16);
+      ctx.fillStyle = "rgba(255,255,255,0.16)";
+      ctx.fillRect(-9, -4, 18, 3);
+      ctx.fillRect(-2, -14, 4, 12);
+      ctx.fillRect(-7, -11, 14, 3);
+    } else if (info.type === "pew") {
+      ctx.fillRect(-14, -7, 28, 7);
+      ctx.fillStyle = "#5d493c";
+      ctx.fillRect(-14, 1, 28, 7);
+      ctx.fillRect(-11, 7, 4, 5);
+      ctx.fillRect(7, 7, 4, 5);
     } else if (info.type === "phone") {
       ctx.fillRect(-9, -6, 18, 14);
       ctx.fillRect(-5, -12, 10, 7);
@@ -745,7 +780,7 @@
   resizeCanvas();
   updateHud();
   renderJournal();
-  addJournal("雨停之后，旧楼里只剩应急灯还亮着。物业说可能只是跳闸。");
+  if (content.openingDialogue) openDialogueById(content.openingDialogue);
   canvas.focus();
   requestAnimationFrame(loop);
 })();

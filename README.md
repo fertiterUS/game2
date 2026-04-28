@@ -4,6 +4,8 @@
 
 ![预览](preview-pixel.png)
 
+当前第一部分剧情：主角在旧教堂醒来，与老人对话得知日期是 1999 年 12 月 31 日，随后走出教堂并进入黑屏章节结束。
+
 ## 操作
 
 - `WASD` / 方向键：移动
@@ -61,18 +63,20 @@ npm run dist:mac
 
 - `#`：墙体，不能通行。
 - `.`：地面。
-- `A/B/C/D/G/K/N/R/S/T`：示例装饰物。真正的交互逻辑由 `interactables` 和 `exits` 决定。
+- `A`：祭坛。
+- `B`：长椅。
+- `D`：出口。
+- `N`：NPC。真正的交互逻辑由 `interactables` 和 `exits` 决定。
 
 一个可交互物示例：
 
 ```js
 {
-  id: "notice",
-  x: 5,
+  id: "elder",
+  x: 9,
   y: 5,
-  label: "查看公告栏",
-  dialogue: "notice",
-  onceFlag: "hasReadNotice"
+  label: "和老人说话",
+  dialogue: "elderIntro"
 }
 ```
 
@@ -80,14 +84,13 @@ npm run dist:mac
 
 ```js
 {
-  id: "officeDoor",
-  x: 19,
-  y: 11,
-  label: "去值班室",
-  targetRoom: "office",
-  targetSpawn: "fromLobby",
-  requiredFlag: "hasReadNotice",
-  lockedDialogue: "noticeFirst"
+  id: "churchDoor",
+  x: 9,
+  y: 10,
+  label: "走出教堂",
+  requiredFlag: "spokeToElder",
+  lockedDialogue: "elderFirst",
+  ending: "partOneEnd"
 }
 ```
 
