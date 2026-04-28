@@ -56,6 +56,57 @@ button {
   image-rendering: pixelated;
 }
 
+.main-menu {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(rgba(2, 3, 3, 0.72), rgba(0, 0, 0, 0.9)),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 4px),
+    #050606;
+}
+
+.menu-content {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+  width: min(360px, calc(100% - 48px));
+  text-align: center;
+}
+
+.menu-kicker {
+  margin: 0;
+  color: #aeb89a;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+.main-menu h1 {
+  margin: 0;
+  color: #efe9d7;
+  font-size: 38px;
+  font-weight: 760;
+  letter-spacing: 0;
+}
+
+.main-menu button {
+  min-width: 148px;
+  min-height: 42px;
+  border: 1px solid rgba(224, 233, 189, 0.38);
+  border-radius: 7px;
+  background: rgba(177, 195, 126, 0.12);
+  color: #f4f1e4;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.main-menu button:hover {
+  border-color: rgba(224, 233, 189, 0.72);
+  background: rgba(177, 195, 126, 0.2);
+}
+
 .hud {
   position: absolute;
   top: 14px;
@@ -107,6 +158,23 @@ button {
   font-size: 14px;
   text-align: center;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+}
+
+.city-notice {
+  position: absolute;
+  left: 50%;
+  top: 86px;
+  z-index: 5;
+  max-width: min(420px, calc(100% - 28px));
+  transform: translateX(-50%);
+  padding: 9px 13px;
+  border: 1px solid rgba(218, 187, 83, 0.42);
+  border-radius: 7px;
+  background: rgba(10, 8, 4, 0.9);
+  color: #f5d773;
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.38);
 }
 
 .dialogue {
@@ -221,6 +289,33 @@ button {
   color: #e8e4d8;
   text-align: center;
   animation: endFade 1.2s ease-out both;
+}
+
+.chapter-card {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  padding: 28px;
+  background: #000;
+  color: #ede8d7;
+  text-align: center;
+  animation: endFade 0.5s ease-out both;
+}
+
+.chapter-card strong {
+  font-size: 24px;
+  font-weight: 760;
+}
+
+.chapter-card p {
+  max-width: 520px;
+  margin: 0;
+  color: #aca492;
+  font-size: 14px;
+  line-height: 1.7;
 }
 
 .ending strong {

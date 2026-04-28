@@ -8,6 +8,14 @@
   </head>
   <body>
     <main class="game-shell">
+      <section id="mainMenu" class="main-menu" aria-label="开始菜单">
+        <div class="menu-content">
+          <p class="menu-kicker">1999.12.31</p>
+          <h1>旧教堂</h1>
+          <button id="startGame" type="button">开始游戏</button>
+        </div>
+      </section>
+
       <canvas id="game" width="960" height="540" tabindex="0" aria-label="2D top-down story game"></canvas>
 
       <section id="hud" class="hud" aria-label="game status">
@@ -27,6 +35,8 @@
 
       <section id="interactionPrompt" class="interaction-prompt hidden"></section>
 
+      <section id="cityNotice" class="city-notice hidden" aria-live="polite"></section>
+
       <section id="dialogue" class="dialogue hidden" aria-live="polite">
         <div class="dialogue-speaker" id="dialogueSpeaker"></div>
         <p class="dialogue-text" id="dialogueText"></p>
@@ -44,6 +54,11 @@
       <section id="ending" class="ending hidden" aria-live="polite">
         <strong id="endingTitle"></strong>
         <p id="endingText"></p>
+      </section>
+
+      <section id="chapterCard" class="chapter-card hidden" aria-live="polite">
+        <strong id="chapterTitle"></strong>
+        <p id="chapterText"></p>
       </section>
 
       <div class="screen-vignette"></div>

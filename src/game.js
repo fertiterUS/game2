@@ -1,11 +1,14 @@
 (() => {
   const content = window.GameContent;
+  const mainMenuEl = document.getElementById("mainMenu");
+  const startGameButton = document.getElementById("startGame");
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
   const roomNameEl = document.getElementById("roomName");
   const objectiveEl = document.getElementById("objective");
   const inventoryEl = document.getElementById("inventory");
   const promptEl = document.getElementById("interactionPrompt");
+  const cityNoticeEl = document.getElementById("cityNotice");
   const dialogueEl = document.getElementById("dialogue");
   const dialogueSpeakerEl = document.getElementById("dialogueSpeaker");
   const dialogueTextEl = document.getElementById("dialogueText");
@@ -16,8 +19,12 @@
   const endingEl = document.getElementById("ending");
   const endingTitleEl = document.getElementById("endingTitle");
   const endingTextEl = document.getElementById("endingText");
+  const chapterCardEl = document.getElementById("chapterCard");
+  const chapterTitleEl = document.getElementById("chapterTitle");
+  const chapterTextEl = document.getElementById("chapterText");
 
   const state = {
+    started: false,
     roomId: content.startRoom,
     player: {
       x: content.startPosition.x * content.tileSize + content.tileSize / 2,
@@ -32,6 +39,8 @@
     journal: [],
     dialogue: null,
     ending: null,
+    chapterCard: null,
+    noticeUntil: 0,
     activeInteractable: null,
     time: 0,
     camera: { x: 0, y: 0 },
@@ -39,7 +48,7 @@
   };
 
   const tileSize = content.tileSize;
-  const solidTiles = new Set(["#"]);
+  const solidTiles = new Set(["#", "~", "!"]);
   const pixelAssets = {
     image: new Image(),
     loaded: false,
@@ -95,21 +104,28 @@
     Spacebar: "Space"
   };
   const objectGlyphs = {
+    "!": { color: "#d9b94c", type: "tape" },
     A: { color: "#9b9178", type: "altar" },
     B: { color: "#8a7462", type: "pew" },
     C: { color: "#554a40", type: "cabinet" },
     D: { color: "#77614f", type: "exit" },
     G: { color: "#53616f", type: "generator" },
     K: { color: "#7c715e", type: "keys" },
+    L: { color: "#7b7869", type: "lamp" },
     N: { color: "#8e9b8e", type: "npc" },
+    O: { color: "#b07852", type: "cross" },
+    Q: { color: "#596b49", type: "pavilion" },
     R: { color: "#6f2f31", type: "door" },
-    S: { color: "#4d5954", type: "stairs" },
-    T: { color: "#4c5b52", type: "phone" }
+    S: { color: "#9c7442", type: "sign" },
+    T: { color: "#4c5b52", type: "phone" },
+    V: { color: "#7d8a88", type: "vehicle" },
+    Y: { color: "#5d7f39", type: "tree" }
   };
 
   let lastFrame = performance.now();
   let audioContext = null;
   let droneGain = null;
+  let chapterTimer = null;
 
   pixelAssets.image.onload = () => {
     pixelAssets.loaded = true;
@@ -191,18 +207,26 @@
     return solidTiles.has(tileAtPixel(x, y));
   }
 
-  function canOccupy(x, y) {
+  function touchedTiles(x, y) {
     const r = state.player.radius;
-    return (
-      !isSolid(x - r, y - r) &&
-      !isSolid(x + r, y - r) &&
-      !isSolid(x - r, y + r) &&
-      !isSolid(x + r, y + r)
-    );
+    return [
+      tileAtPixel(x - r, y - r),
+      tileAtPixel(x + r, y - r),
+      tileAtPixel(x - r, y + r),
+      tileAtPixel(x + r, y + r)
+    ];
+  }
+
+  function touchesGlyph(x, y, glyph) {
+    return touchedTiles(x, y).includes(glyph);
+  }
+
+  function canOccupy(x, y) {
+    return !touchedTiles(x, y).some((tile) => solidTiles.has(tile));
   }
 
   function movePlayer(dx, dy, dt) {
-    if (state.dialogue || state.ending) return;
+    if (!state.started || state.dialogue || state.ending || state.chapterCard) return;
     if (dx === 0 && dy === 0) return;
 
     const length = Math.hypot(dx, dy);
@@ -212,8 +236,17 @@
     const ny = state.player.y + (dy / length) * step;
 
     state.player.facing = { x: dx / length, y: dy / length };
-    if (canOccupy(nx, state.player.y)) state.player.x = nx;
-    if (canOccupy(state.player.x, ny)) state.player.y = ny;
+    if (canOccupy(nx, state.player.y)) {
+      state.player.x = nx;
+    } else if (touchesGlyph(nx, state.player.y, "!")) {
+      showNotice(content.boundaryMessage || "此城市已封闭。");
+    }
+
+    if (canOccupy(state.player.x, ny)) {
+      state.player.y = ny;
+    } else if (touchesGlyph(state.player.x, ny, "!")) {
+      showNotice(content.boundaryMessage || "此城市已封闭。");
+    }
   }
 
   function findInteractable() {
@@ -239,7 +272,7 @@
   }
 
   function interact() {
-    if (state.ending) return;
+    if (!state.started || state.ending || state.chapterCard) return;
 
     if (state.dialogue) {
       advanceDialogue();
@@ -286,7 +319,34 @@
       showEnding(exit.ending);
       return;
     }
+    if (exit.chapterCard) {
+      showChapterCard(exit.chapterCard, () => changeRoom(exit.targetRoom, exit.targetSpawn));
+      return;
+    }
     changeRoom(exit.targetRoom, exit.targetSpawn);
+  }
+
+  function showChapterCard(cardId, onComplete) {
+    const card = content.chapterCards?.[cardId] || {
+      title: cardId || "章节",
+      lines: [],
+      duration: 1500
+    };
+    window.clearTimeout(chapterTimer);
+    state.chapterCard = cardId || "chapter";
+    state.keys.clear();
+    closeDialogue();
+    promptEl.classList.add("hidden");
+    journalEl.classList.add("hidden");
+    chapterTitleEl.textContent = card.title;
+    chapterTextEl.textContent = (card.lines || []).join(" ");
+    chapterCardEl.classList.remove("hidden");
+    chapterTimer = window.setTimeout(() => {
+      state.chapterCard = null;
+      chapterCardEl.classList.add("hidden");
+      if (onComplete) onComplete();
+      canvas.focus();
+    }, card.duration || 1500);
   }
 
   function showEnding(endingId) {
@@ -302,6 +362,13 @@
     endingTitleEl.textContent = ending.title;
     endingTextEl.textContent = ending.lines.join(" ");
     endingEl.classList.remove("hidden");
+  }
+
+  function showNotice(text, duration = 1400) {
+    if (!text) return;
+    state.noticeUntil = performance.now() + duration;
+    cityNoticeEl.textContent = text;
+    cityNoticeEl.classList.remove("hidden");
   }
 
   function changeRoom(roomId, spawnId) {
@@ -414,7 +481,7 @@
 
   function updateHud() {
     roomNameEl.textContent = room().name;
-    objectiveEl.textContent = content.objective;
+    objectiveEl.textContent = room().objective || content.objective;
     inventoryEl.textContent = state.inventory.size
       ? [...state.inventory].map((id) => content.items[id].name).join("、")
       : "空";
@@ -422,7 +489,7 @@
 
   function updatePrompt() {
     state.activeInteractable = findInteractable();
-    if (state.dialogue || state.ending || !state.activeInteractable) {
+    if (!state.started || state.dialogue || state.ending || state.chapterCard || !state.activeInteractable) {
       promptEl.classList.add("hidden");
       return;
     }
@@ -468,15 +535,40 @@
         const py = y * tileSize;
         if (glyph === "#") {
           drawWall(px, py, currentRoom.wall);
+        } else if (glyph === "~") {
+          drawWater(px, py, x, y);
         } else {
-          drawFloor(px, py, currentRoom.floor, x, y);
+          drawFloor(px, py, currentRoom.floor, x, y, glyph);
           if (objectGlyphs[glyph]) drawMapObject(px, py, objectGlyphs[glyph], x, y);
         }
       }
     }
   }
 
-  function drawFloor(x, y, color, tx, ty) {
+  function drawFloor(x, y, color, tx, ty, glyph = ".") {
+    if (glyph === "=") {
+      ctx.fillStyle = "#3b3b36";
+      ctx.fillRect(x, y, tileSize, tileSize);
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.fillRect(x, y, tileSize, 1);
+      ctx.fillRect(x, y, 1, tileSize);
+      if ((tx + ty) % 5 === 0) {
+        ctx.fillStyle = "rgba(230,220,165,0.22)";
+        ctx.fillRect(x + 13, y + 15, 6, 2);
+      }
+      return;
+    }
+
+    if (glyph === ",") {
+      ctx.fillStyle = "#20331e";
+      ctx.fillRect(x, y, tileSize, tileSize);
+      ctx.fillStyle = (tx + ty) % 2 === 0 ? "rgba(116,145,70,0.18)" : "rgba(29,54,26,0.22)";
+      ctx.fillRect(x, y, tileSize, tileSize);
+      ctx.fillStyle = "rgba(159, 182, 94, 0.2)";
+      ctx.fillRect(x + ((tx * 7) % 23), y + ((ty * 11) % 23), 2, 2);
+      return;
+    }
+
     const floorIndex = pixelAssets.floorTiles[(tx * 3 + ty * 5) % pixelAssets.floorTiles.length];
     if (drawPixelTile(floorIndex, x, y)) {
       ctx.fillStyle = "rgba(5, 9, 8, 0.36)";
@@ -490,6 +582,17 @@
     ctx.fillRect(x, y, tileSize, tileSize);
     ctx.strokeStyle = "rgba(0,0,0,0.12)";
     ctx.strokeRect(x + 0.5, y + 0.5, tileSize - 1, tileSize - 1);
+  }
+
+  function drawWater(x, y, tx, ty) {
+    const ripple = Math.sin(state.time * 2 + tx * 0.8 + ty) * 0.12;
+    ctx.fillStyle = "#122d38";
+    ctx.fillRect(x, y, tileSize, tileSize);
+    ctx.fillStyle = `rgba(134, 178, 185, ${0.14 + ripple})`;
+    ctx.fillRect(x + 3, y + 7 + ((tx + ty) % 3), 12, 2);
+    ctx.fillRect(x + 17, y + 19 - ((tx + ty) % 4), 10, 2);
+    ctx.fillStyle = "rgba(0,0,0,0.16)";
+    ctx.fillRect(x, y + tileSize - 3, tileSize, 3);
   }
 
   function drawWall(x, y, color) {
@@ -534,6 +637,17 @@
       ctx.arc(0, -4, 9, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillRect(-7, 4, 14, 12);
+    } else if (info.type === "tape") {
+      ctx.fillStyle = "#d6b13f";
+      ctx.fillRect(-16, -3, 32, 6);
+      ctx.fillStyle = "#17140c";
+      for (let i = -18; i < 18; i += 8) {
+        ctx.save();
+        ctx.translate(i, 0);
+        ctx.rotate(-0.65);
+        ctx.fillRect(-2, -9, 4, 18);
+        ctx.restore();
+      }
     } else if (info.type === "altar") {
       ctx.fillRect(-13, -7, 26, 16);
       ctx.fillStyle = "rgba(255,255,255,0.16)";
@@ -546,6 +660,52 @@
       ctx.fillRect(-14, 1, 28, 7);
       ctx.fillRect(-11, 7, 4, 5);
       ctx.fillRect(7, 7, 4, 5);
+    } else if (info.type === "tree") {
+      ctx.fillStyle = "#3f2e1e";
+      ctx.fillRect(-3, 2, 6, 12);
+      ctx.fillStyle = info.color;
+      ctx.beginPath();
+      ctx.arc(-5, -4, 9, 0, Math.PI * 2);
+      ctx.arc(5, -5, 10, 0, Math.PI * 2);
+      ctx.arc(0, -13, 9, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (info.type === "pavilion") {
+      ctx.fillStyle = "#2f5c42";
+      ctx.beginPath();
+      ctx.moveTo(-13, -4);
+      ctx.lineTo(0, -15);
+      ctx.lineTo(13, -4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#7b3c2a";
+      ctx.fillRect(-9, -4, 18, 12);
+      ctx.fillStyle = "#c2a66b";
+      ctx.fillRect(-12, 7, 24, 4);
+    } else if (info.type === "lamp") {
+      ctx.fillStyle = "#27261f";
+      ctx.fillRect(-2, -12, 4, 23);
+      ctx.fillRect(-6, -14, 12, 3);
+      ctx.fillStyle = "rgba(246, 218, 126, 0.72)";
+      ctx.fillRect(-4, -18, 8, 6);
+    } else if (info.type === "vehicle") {
+      ctx.fillStyle = info.color;
+      ctx.fillRect(-13, -8, 26, 16);
+      ctx.fillStyle = "#273841";
+      ctx.fillRect(-8, -5, 8, 5);
+      ctx.fillRect(3, -5, 7, 5);
+      ctx.fillStyle = "#141414";
+      ctx.fillRect(-10, 7, 5, 3);
+      ctx.fillRect(5, 7, 5, 3);
+    } else if (info.type === "sign") {
+      ctx.fillStyle = "#4d3321";
+      ctx.fillRect(-13, -9, 26, 14);
+      ctx.fillStyle = "#d3b166";
+      ctx.fillRect(-10, -6, 20, 3);
+      ctx.fillRect(-8, 0, 16, 2);
+    } else if (info.type === "cross") {
+      ctx.fillStyle = info.color;
+      ctx.fillRect(-2, -15, 4, 25);
+      ctx.fillRect(-10, -7, 20, 4);
     } else if (info.type === "phone") {
       ctx.fillRect(-9, -6, 18, 14);
       ctx.fillRect(-5, -12, 10, 7);
@@ -648,7 +808,8 @@
   }
 
   function drawLight(currentRoom, dimensions) {
-    const radius = state.flags.generatorAwake ? 178 : 132;
+    const radius = currentRoom.lightRadius || (state.flags.generatorAwake ? 178 : 132);
+    const fogAlpha = typeof currentRoom.fogAlpha === "number" ? currentRoom.fogAlpha : 0.72;
     const pulse = Math.sin(state.time * 3.3) * 12 + Math.sin(state.time * 9.1) * 4;
     const gradient = ctx.createRadialGradient(
       state.player.x,
@@ -665,7 +826,7 @@
     ctx.save();
     ctx.globalCompositeOperation = "source-over";
     ctx.fillStyle = currentRoom.fog;
-    ctx.globalAlpha = 0.72;
+    ctx.globalAlpha = fogAlpha;
     ctx.fillRect(0, 0, dimensions.width, dimensions.height);
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = "destination-out";
@@ -697,6 +858,10 @@
   function update(dt) {
     state.time += dt;
     state.shake = Math.max(0, state.shake - dt);
+    if (state.noticeUntil && performance.now() > state.noticeUntil) {
+      state.noticeUntil = 0;
+      cityNoticeEl.classList.add("hidden");
+    }
 
     const left = state.keys.has("ArrowLeft") || state.keys.has("KeyA");
     const right = state.keys.has("ArrowRight") || state.keys.has("KeyD");
@@ -745,9 +910,26 @@
     droneGain.gain.setTargetAtTime(gainByMood[room().musicMood] || 0.014, audioContext.currentTime, 0.8);
   }
 
+  function startGame() {
+    if (state.started) return;
+    state.started = true;
+    mainMenuEl.classList.add("hidden");
+    ensureAudio();
+    showChapterCard(content.startChapter, () => {
+      if (content.openingDialogue) openDialogueById(content.openingDialogue);
+    });
+    canvas.focus();
+  }
+
   window.addEventListener("resize", resizeCanvas);
   window.addEventListener("keydown", (event) => {
     const code = normalizedCode(event);
+    if (!state.started && (code === "Enter" || code === "Space")) {
+      event.preventDefault();
+      startGame();
+      return;
+    }
+    if (!state.started) return;
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(code)) {
       event.preventDefault();
     }
@@ -775,12 +957,12 @@
     ensureAudio();
     if (state.activeInteractable) interact();
   });
+  startGameButton.addEventListener("click", startGame);
   closeJournalButton.addEventListener("click", () => toggleJournal(false));
 
   resizeCanvas();
   updateHud();
   renderJournal();
-  if (content.openingDialogue) openDialogueById(content.openingDialogue);
   canvas.focus();
   requestAnimationFrame(loop);
 })();

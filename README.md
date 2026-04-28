@@ -4,7 +4,7 @@
 
 ![预览](preview-pixel.png)
 
-当前第一部分剧情：主角在旧教堂醒来，与老人对话得知日期是 1999 年 12 月 31 日，随后走出教堂并进入黑屏章节结束。
+当前流程：开始菜单进入游戏后黑屏显示“序章”；主角在旧教堂醒来，与老人对话得知日期是 1999 年 12 月 31 日；走出教堂后黑屏显示“第一章”，随后进入城市地图。第一章剧情仍是占位，城市边缘已用警戒线封闭，碰到边缘会提示“此城市已封闭”。
 
 ## 操作
 
@@ -66,7 +66,12 @@ npm run dist:mac
 - `A`：祭坛。
 - `B`：长椅。
 - `D`：出口。
-- `N`：NPC。真正的交互逻辑由 `interactables` 和 `exits` 决定。
+- `N`：NPC。
+- `!`：城市边缘警戒线，不能通行。
+- `=`：道路。
+- `,`：草地。
+- `~`：水面。
+- `S/L/V/Y/Q/O`：城市装饰物。真正的交互逻辑由 `interactables` 和 `exits` 决定。
 
 一个可交互物示例：
 
@@ -90,7 +95,9 @@ npm run dist:mac
   label: "走出教堂",
   requiredFlag: "spokeToElder",
   lockedDialogue: "elderFirst",
-  ending: "partOneEnd"
+  targetRoom: "city",
+  targetSpawn: "churchGate",
+  chapterCard: "chapterOne"
 }
 ```
 
