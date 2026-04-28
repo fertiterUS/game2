@@ -1,0 +1,56 @@
+{
+  "name": "topdown-story-horror",
+  "version": "0.1.0",
+  "description": "2D top-down micro-horror story game desktop app.",
+  "main": "desktop/main.cjs",
+  "private": true,
+  "author": "",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win nsis portable",
+    "dist:mac": "electron-builder --mac dmg zip"
+  },
+  "devDependencies": {
+    "electron": "^30.5.1",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.story.horror.topdown",
+    "productName": "旧楼回声",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "index.html",
+      "styles.css",
+      "src/**/*",
+      "assets/**/*",
+      "desktop/**/*",
+      "preview*.png",
+      "README.md"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.games"
+    }
+  }
+}

@@ -5,3 +5,18 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
+
+# Unity generated files
+UnityGame/[Ll]ibrary/
+UnityGame/[Tt]emp/
+UnityGame/[Oo]bj/
+UnityGame/[Bb]uild/
+UnityGame/[Bb]uilds/
+UnityGame/[Ll]ogs/
+UnityGame/[Uu]ser[Ss]ettings/
+UnityGame/[Mm]emoryCaptures/
+UnityGame/*.csproj
+UnityGame/*.sln
+UnityGame/*.user
+UnityGame/*.pidb
+UnityGame/*.booproj

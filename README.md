@@ -43,6 +43,12 @@ npm run dist:mac
 
 产物会输出到 `release/`。通常 Windows 包在 Windows 上构建，macOS 包在 Mac 上构建；仓库里也放了 `.github/workflows/build-desktop.yml`，可以在 GitHub Actions 里分别构建两边的包。
 
+## Unity 工程
+
+Unity 版工程在 `UnityGame/`。用 Unity Hub 打开这个目录即可。
+
+现有 HTML/Electron 原型已经导入到 `UnityGame/Assets/ImportedPrototype/`，包括 `src`、`assets`、桌面入口文件和预览图。`node_modules` 和 Unity 的生成缓存不会提交到仓库。
+
 ## 素材来源
 
 当前像素素材使用 Kenney 的 RPG Urban Pack，许可为 Creative Commons Zero (CC0)，可用于个人、学习和商业项目。
